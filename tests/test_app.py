@@ -99,11 +99,23 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertIn("Nombre de usuario".encode(), login_page.data)
         self.assertIn('action="/iniciar-sesion"'.encode(), login_page.data)
         self.assertIn('class="back-link auth-back-link" href="/"'.encode(), login_page.data)
+        self.assertIn(b'<body class="auth-view login-view">', login_page.data)
+        self.assertIn(b'Selva3.png', login_page.data)
 
         artwork = self.client.head("/static/images/semillitas-bienvenidos.png")
         self.assertEqual(artwork.status_code, 200)
         self.assertEqual(artwork.mimetype, "image/png")
         artwork.close()
+
+        mobile_artwork = self.client.head("/media/SelvaCelular.png")
+        self.assertEqual(mobile_artwork.status_code, 200)
+        self.assertEqual(mobile_artwork.mimetype, "image/png")
+        mobile_artwork.close()
+        stylesheet = self.client.get("/static/css/app.css")
+        self.assertIn(b'body.auth-view::before', stylesheet.data)
+        self.assertIn(b'url("/media/SelvaCelular.png")', stylesheet.data)
+        self.assertIn(b'backdrop-filter: blur(20px) saturate(160%)', stylesheet.data)
+        stylesheet.close()
 
     def test_password_visibility_controls_are_available_on_auth_forms(self):
         login_page = self.client.get("/iniciar-sesion")
@@ -112,6 +124,7 @@ class SemillitasWebTests(unittest.TestCase):
 
         register_page = self.client.get("/registro")
         self.assertEqual(register_page.status_code, 200)
+        self.assertIn(b'<body class="auth-view register-view">', register_page.data)
         self.assertEqual(register_page.data.count(b"data-password-toggle"), 2)
         self.assertIn(b"Mostrar clave de docente", register_page.data)
 
@@ -140,7 +153,7 @@ class SemillitasWebTests(unittest.TestCase):
         with self.app.app_context():
             from app import get_db
 
-            get_db().execute("UPDATE users SET points = 24 WHERE id = ?", (user_id,))
+            get_db().execute("UPDATE users SET points = 24, theme = 'oceano' WHERE id = ?", (user_id,))
             get_db().commit()
 
         dashboard = self.client.get("/inicio")
@@ -166,33 +179,29 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertEqual(settings.status_code, 200)
         self.assertIn("Ajustes de aventura".encode(), settings.data)
         self.assertIn('name="avatar" value="🦁" checked'.encode(), settings.data)
+        self.assertIn("Elige quién te acompaña en la selva.".encode(), settings.data)
+        self.assertNotIn(b'name="theme"', settings.data)
+        self.assertNotIn("Elige el color de tu mundo".encode(), settings.data)
         self.assertIn(b'data-preserve-scroll', settings.data)
-        self.assertIn(b'data-theme-background-image="none, none"', settings.data)
-        self.assertIn(b'data-theme-background-image="linear-gradient(130deg,', settings.data)
         saved = self.client.post(
             "/configuracion",
-            data={"csrf_token": self.csrf_token(), "avatar": "🐯", "theme": "oceano"},
+            data={"csrf_token": self.csrf_token(), "avatar": "🐯"},
             follow_redirects=True,
         )
         self.assertIn("Tu perfil se actualizó.".encode(), saved.data)
         self.assertIn('name="avatar" value="🐯" checked'.encode(), saved.data)
-        self.assertIn('name="theme" value="oceano"'.encode(), saved.data)
-        self.assertIn('data-theme-primary="#0277bd"'.encode(), saved.data)
-        self.assertIn("--primary: #0277bd".encode(), saved.data)
-        self.assertIn('data-theme-background="#edf8fc"'.encode(), saved.data)
-        self.assertIn('data-theme-surface-soft="#e9f5f8"'.encode(), saved.data)
+        self.assertNotIn(b'name="theme"', saved.data)
 
         dashboard = self.client.get("/inicio")
-        self.assertIn("--page-bg: #edf8fc".encode(), dashboard.data)
-        self.assertIn("--primary: #0277bd".encode(), dashboard.data)
+        self.assertIn("--page-bg: #204333".encode(), dashboard.data)
+        self.assertIn("--primary: #42a85e".encode(), dashboard.data)
         css = self.client.get("/static/css/app.css")
         self.assertIn(".button.primary, .button.tiny", css.data.decode())
         self.assertIn("background: var(--primary)", css.data.decode())
         css.close()
         script = self.client.get("/static/js/site.js")
-        self.assertIn("input.addEventListener(\"change\"", script.data.decode())
-        self.assertIn('backgroundImage: "--page-bg-image"', script.data.decode())
         self.assertIn('data-preserve-scroll', script.data.decode())
+        self.assertNotIn("themeProperties", script.data.decode())
         script.close()
 
     def test_dashboard_separates_years_into_accessible_tabs_and_loads_background_asset(self):
@@ -441,11 +450,12 @@ class SemillitasWebTests(unittest.TestCase):
             from app import get_db
 
             user = get_db().execute(
-                "SELECT password_hash, points, medal_oro FROM users WHERE username = ?",
+                "SELECT password_hash, points, medal_oro, theme FROM users WHERE username = ?",
                 ("estudiante_demo",),
             ).fetchone()
             self.assertTrue(semillitas_app.check_password_hash(user["password_hash"], "clave-anterior"))
             self.assertEqual((user["points"], user["medal_oro"]), (12, 1))
+            self.assertEqual(user["theme"], "selva")
         self.assertEqual(source.read_text(encoding="utf-8"), original)
 
 

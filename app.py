@@ -94,13 +94,6 @@ STICKERS = [
 
 THEMES = {
     "selva": {"name": "🌿 Selva Original", "background": "#204333", "background_image": 'linear-gradient(130deg, rgba(5, 28, 23, .42), rgba(7, 42, 30, .32)), url("/media/Selva3.png")', "primary": "#42a85e", "accent": "#ffd166", "bar": "#14583a", "ink": "#f3ffdc", "surface": "rgba(8, 48, 34, .84)", "surface_soft": "rgba(20, 88, 58, .78)", "line": "rgba(204, 244, 163, .32)", "muted": "#d4e5cf", "glass": "rgba(8, 48, 34, .82)", "glass_strong": "rgba(8, 48, 34, .9)", "glass_border": "rgba(204, 244, 163, .32)"},
-    "selva_dia": {"name": "🌅 Selva de Día", "background": "#fffaf0", "primary": "#286b43", "accent": "#e9893f", "bar": "#fffdf9", "ink": "#26352c", "surface": "#ffffff", "surface_soft": "#f4f7ef", "line": "#e6ebdf", "muted": "#718078", "glass": "rgba(255, 255, 255, .92)", "glass_strong": "rgba(255, 255, 255, .97)", "glass_border": "rgba(255, 255, 255, .8)"},
-    "selva_noche": {"name": "🌙 Selva de Noche", "background": "#171d2b", "primary": "#49bb78", "accent": "#ff8c69", "bar": "#20293a", "ink": "#e8eaf6", "surface": "#242d3e", "surface_soft": "#303a4d", "line": "#414d60", "muted": "#b7c0cc", "glass": "rgba(21, 31, 45, .88)", "glass_strong": "rgba(29, 42, 58, .96)", "glass_border": "rgba(228, 238, 241, .3)"},
-    "oceano": {"name": "🌊 Océano Azul", "background": "#edf8fc", "primary": "#0277bd", "accent": "#00a5bd", "bar": "#ffffff", "ink": "#123c52", "surface": "#ffffff", "surface_soft": "#e9f5f8", "line": "#d8e9ee", "muted": "#637e88", "glass": "rgba(246, 253, 255, .92)", "glass_strong": "rgba(255, 255, 255, .97)", "glass_border": "rgba(255, 255, 255, .82)"},
-    "bosque_enchantado": {"name": "🧚 Bosque Encantado", "background": "#f5f0fb", "primary": "#7b1fa2", "accent": "#e05c8d", "bar": "#ffffff", "ink": "#3e2451", "surface": "#ffffff", "surface_soft": "#f1eafb", "line": "#e8dff1", "muted": "#776681", "glass": "rgba(253, 249, 255, .92)", "glass_strong": "rgba(255, 255, 255, .97)", "glass_border": "rgba(255, 255, 255, .82)"},
-    "desierto": {"name": "🏜️ Desierto Dorado", "background": "#fff8ed", "primary": "#bd6b16", "accent": "#d98a20", "bar": "#ffffff", "ink": "#563b1e", "surface": "#ffffff", "surface_soft": "#fbf0df", "line": "#eee0cb", "muted": "#89755c", "glass": "rgba(255, 251, 243, .93)", "glass_strong": "rgba(255, 255, 255, .97)", "glass_border": "rgba(255, 255, 255, .84)"},
-    "montanas": {"name": "⛰️ Montañas Nevadas", "background": "#f0f7fc", "primary": "#0369a1", "accent": "#0284c7", "bar": "#ffffff", "ink": "#164e63", "surface": "#ffffff", "surface_soft": "#eaf4fb", "line": "#dbe8f0", "muted": "#657e8c", "glass": "rgba(247, 252, 255, .93)", "glass_strong": "rgba(255, 255, 255, .97)", "glass_border": "rgba(255, 255, 255, .84)"},
-    "arcoiris": {"name": "🌈 Arcoíris Mágico", "background": "#fff3f8", "primary": "#cf277e", "accent": "#d4a000", "bar": "#ffffff", "ink": "#5e2050", "surface": "#ffffff", "surface_soft": "#fbeaf3", "line": "#f1dce8", "muted": "#856777", "glass": "rgba(255, 249, 252, .93)", "glass_strong": "rgba(255, 255, 255, .97)", "glass_border": "rgba(255, 255, 255, .84)"},
 }
 
 GAME_CATALOG = [
@@ -315,9 +308,7 @@ def _legacy_users(db: Any, app: Flask) -> None:
             continue
         medals = record.get("medallas") if isinstance(record.get("medallas"), dict) else {}
         role = "docente" if record.get("tipo") == "docente" else "estudiante"
-        theme = record.get("tema_preferido", "selva_dia")
-        if theme not in THEMES:
-            theme = "selva_dia"
+        theme = "selva"
         album = record.get("album", [])
         if not isinstance(album, list):
             album = []
@@ -379,7 +370,7 @@ def _init_database(app: Flask) -> None:
                 medal_bronce INTEGER NOT NULL DEFAULT 0,
                 medal_otros INTEGER NOT NULL DEFAULT 0,
                 album_json TEXT NOT NULL DEFAULT '[]',
-                theme TEXT NOT NULL DEFAULT 'selva_dia',
+                theme TEXT NOT NULL DEFAULT 'selva',
                 tree_level INTEGER NOT NULL DEFAULT 1,
                 gender TEXT NOT NULL DEFAULT 'otro',
                 tutorial_seen INTEGER NOT NULL DEFAULT 0
@@ -468,11 +459,10 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     @app.context_processor
     def common_template_values() -> dict[str, Any]:
         user = _user()
-        theme = THEMES.get(user["theme"], THEMES["selva_dia"]) if user else THEMES["selva_dia"]
+        theme = THEMES["selva"]
         return {
             "current_user": user,
             "theme": theme,
-            "themes": THEMES,
             "csrf_token": _ensure_csrf_token(),
         }
 
@@ -740,7 +730,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     @app.get("/ajustes")
     def settings_page():
         _require_user()
-        return render_template("settings.html", avatars=AVATARS, themes=THEMES)
+        return render_template("settings.html", avatars=AVATARS)
 
     @app.get("/guia")
     def guide():
@@ -759,11 +749,10 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def settings():
         user = _require_user()
         avatar = request.form.get("avatar", user["avatar"])
-        theme = request.form.get("theme", user["theme"])
-        if avatar not in AVATARS or theme not in THEMES:
+        if avatar not in AVATARS:
             abort(400)
         db = get_db()
-        db.execute("UPDATE users SET avatar = ?, theme = ? WHERE id = ?", (avatar, theme, user["id"]))
+        db.execute("UPDATE users SET avatar = ? WHERE id = ?", (avatar, user["id"]))
         db.commit()
         flash("Tu perfil se actualizó.", "success")
         return redirect(url_for("settings_page"))

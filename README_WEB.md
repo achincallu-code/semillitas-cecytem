@@ -27,4 +27,4 @@ La app usa PostgreSQL cuando existe `DATABASE_URL` y SQLite cuando no existe. La
 - Las cuentas nuevas se guardan en la base configurada. El rol docente requiere `KINDER_TEACHER_CODE`.
 - En Render, `KINDER_SECRET_KEY` debe mantenerse estable para conservar las sesiones; el Blueprint la genera y guarda como secreto.
 - Los reportes del panel docente se descargan como CSV desde la aplicación.
-- El avance del navegador, la autenticación, los niveles, las medallas, las estampas, los temas y los minijuegos usan la base configurada; la versión Tkinter y su archivo de progreso permanecen separados.
+- El avance del navegador, la autenticación, los niveles, las medallas, las estampas y los minijuegos usan la base configurada; la interfaz conserva su apariencia de selva. La versión Tkinter y su archivo de progreso permanecen separados.

@@ -4,11 +4,11 @@
 <section class="settings-page section-block">
   <a class="back-link" href="{{ url_for('dashboard') }}">← Volver a mi aventura</a>
   <header class="settings-intro card">
-    <span class="settings-hero-icon" aria-hidden="true">🎨</span>
+    <span class="settings-hero-icon" aria-hidden="true">🐾</span>
     <div>
-      <p class="eyebrow">⚙️ TU ESPACIO, A TU MANERA</p>
+      <p class="eyebrow">⚙️ TU ESPACIO, TU AVENTURA</p>
       <h1>Ajustes de aventura</h1>
-      <p>Elige quién te acompaña y los colores de tu mundo.</p>
+      <p>Elige quién te acompaña en la selva.</p>
     </div>
   </header>
   <form class="settings-form settings-card card" method="post" action="{{ url_for('settings') }}" data-preserve-scroll>
@@ -21,31 +21,6 @@
           <label class="avatar-choice">
             <input type="radio" name="avatar" value="{{ avatar }}" {% if avatar == current_user.avatar %}checked{% endif %}>
             <span>{{ avatar }}</span>
-          </label>
-        {% endfor %}
-      </div>
-    </fieldset>
-    <fieldset class="theme-picker">
-      <legend>Elige el color de tu mundo</legend>
-      <p class="settings-help">Puedes cambiarlo cuando quieras.</p>
-      <div class="theme-options">
-        {% for key, option in themes.items() %}
-          <label class="theme-choice" style="--theme-primary: {{ option.primary }}; --theme-accent: {{ option.accent }}; --theme-soft: {{ option.surface_soft }}">
-            <input type="radio" name="theme" value="{{ key }}"
-              data-theme-background="{{ option.background }}"
-              data-theme-background-image="{{ option.get('background_image', 'none, none') }}"
-              data-theme-primary="{{ option.primary }}"
-              data-theme-accent="{{ option.accent }}"
-              data-theme-bar="{{ option.bar }}"
-              data-theme-ink="{{ option.ink }}"
-              data-theme-surface="{{ option.surface }}"
-              data-theme-surface-soft="{{ option.surface_soft }}"
-              data-theme-line="{{ option.line }}"
-              data-theme-muted="{{ option.muted }}"
-              {% if key == current_user.theme %}checked{% endif %}>
-            <span class="theme-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="theme-name">{{ option.name }}</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
           </label>
         {% endfor %}
       </div>
