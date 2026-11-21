@@ -356,6 +356,24 @@ th, td { border-color: var(--line); }
   .game-stage { min-height: 330px; padding: 21px 14px; }
   .game-tools { justify-content: center; }
 }
+
+body.auth-view .site-main {
+  animation: auth-route-enter .28s ease both;
+  transition: opacity .16s ease, transform .16s ease, filter .16s ease;
+}
+body.auth-view.auth-route-leaving .site-main {
+  opacity: 0;
+  transform: translateY(8px) scale(.99);
+  filter: blur(4px);
+  pointer-events: none;
+}
+@keyframes auth-route-enter {
+  from { opacity: 0; transform: translateY(10px) scale(.99); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.auth-view .site-main { animation: none; transition: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
@@ -2210,4 +2228,60 @@ th, td { border-color: var(--line); }
     background: rgba(249, 255, 253, .9);
   }
 
+}
+
+@media (max-width: 560px) {
+  .topbar {
+    position: sticky;
+    z-index: 40;
+    top: 0;
+    min-height: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 7px 12px 6px;
+    background: color-mix(in srgb, var(--glass), transparent 3%);
+    box-shadow: 0 7px 20px rgba(4, 27, 20, .28);
+  }
+  .brand { gap: 7px; font-size: 12px; }
+  .brand-mark {
+    width: 35px;
+    height: 35px;
+    border-radius: 12px;
+    font-size: 19px;
+    animation: none;
+  }
+  .brand-label small { margin-top: 2px; font-size: 9px; }
+  .top-actions {
+    display: grid;
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-content: stretch;
+    gap: 3px;
+    overflow: visible;
+    padding: 0;
+  }
+  .top-actions .nav-link {
+    width: 100%;
+    min-width: 0;
+    min-height: 31px;
+    gap: 4px;
+    padding: 5px 2px;
+    border-radius: 9px;
+    font-size: 10px;
+  }
+  .top-actions .nav-link span { font-size: 14px; }
+  .top-actions form { width: 100%; }
+  .top-actions .score-pill {
+    width: 100%;
+    min-height: 31px;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 3px;
+    font-size: 10px;
+  }
+  .top-actions:has(> a:first-child + form:last-child) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

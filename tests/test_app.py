@@ -121,6 +121,9 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertIn(b'body.auth-view::before', stylesheet.data)
         self.assertIn(b'url("/media/SelvaAuthMobile.png")', stylesheet.data)
         self.assertIn(b'body.auth-view .flash', stylesheet.data)
+        self.assertIn(b'@keyframes auth-route-enter', stylesheet.data)
+        self.assertIn(b'position: sticky;', stylesheet.data)
+        self.assertIn(b'grid-template-columns: repeat(4, minmax(0, 1fr))', stylesheet.data)
         stylesheet.close()
 
     def test_password_visibility_controls_are_available_on_auth_forms(self):
@@ -136,6 +139,7 @@ class SemillitasWebTests(unittest.TestCase):
 
         script = self.client.get("/static/js/site.js")
         self.assertIn(b'input.type = visible ? "text" : "password"', script.data)
+        self.assertIn(b"auth-route-leaving", script.data)
         script.close()
 
     def test_register_login_and_dashboard(self):
@@ -208,6 +212,9 @@ class SemillitasWebTests(unittest.TestCase):
         script = self.client.get("/static/js/site.js")
         self.assertIn('data-preserve-scroll', script.data.decode())
         self.assertNotIn("themeProperties", script.data.decode())
+        self.assertIn("semillitas-music-position", script.data.decode())
+        self.assertIn('window.addEventListener("pagehide"', script.data.decode())
+        self.assertIn('music.currentTime = Math.min(position % music.duration', script.data.decode())
         script.close()
 
     def test_dashboard_separates_years_into_accessible_tabs_and_loads_background_asset(self):

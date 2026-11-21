@@ -1,4 +1,35 @@
 (() => {
+  if (!document.body.classList.contains("auth-view")) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const link = target?.closest("a[href]");
+    if (
+      !link
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+      || link.target
+      || link.hasAttribute("download")
+    ) return;
+
+    const destination = new URL(link.href, window.location.href);
+    if (
+      destination.origin !== window.location.origin
+      || !["/iniciar-sesion", "/registro"].includes(destination.pathname)
+      || destination.pathname === window.location.pathname
+    ) return;
+
+    event.preventDefault();
+    document.body.classList.add("auth-route-leaving");
+    window.setTimeout(() => window.location.assign(destination.href), 160);
+  });
+})();
+
+(() => {
   const scrollKey = "semillitas-post-scroll";
   const savedPosition = sessionStorage.getItem(scrollKey);
   if (savedPosition) {
@@ -54,17 +85,39 @@
   if (!button || !music) return;
   music.volume = 0.2;
   const musicPreference = "semillitas-music-enabled";
+  const musicPosition = "semillitas-music-position";
+  let lastSavedPosition = 0;
+
+  function saveMusicPosition(force = false) {
+    if (!force && Math.abs(music.currentTime - lastSavedPosition) < 1) return;
+    sessionStorage.setItem(musicPosition, String(music.currentTime));
+    lastSavedPosition = music.currentTime;
+  }
 
   function setMusicButton(playing) {
     button.textContent = playing ? "🔊 Música" : "🔈 Música";
     button.setAttribute("aria-pressed", String(playing));
   }
 
-  if (localStorage.getItem(musicPreference) === "true") {
-    music.play().then(() => setMusicButton(true)).catch(() => {
-      localStorage.removeItem(musicPreference);
+  music.addEventListener("timeupdate", saveMusicPosition);
+  window.addEventListener("pagehide", () => saveMusicPosition(true));
+
+  function resumeMusic() {
+    const position = Number(sessionStorage.getItem(musicPosition));
+    if (Number.isFinite(position) && position > 0 && Number.isFinite(music.duration) && music.duration > 0) {
+      music.currentTime = Math.min(position % music.duration, Math.max(0, music.duration - 0.1));
+    }
+
+    music.play().then(() => setMusicButton(true)).catch((error) => {
       setMusicButton(false);
+      button.title = "Tu navegador no pudo reanudar la música.";
+      console.warn("No se pudo reanudar la música de fondo.", error);
     });
+  }
+
+  if (localStorage.getItem(musicPreference) === "true") {
+    music.addEventListener("loadedmetadata", resumeMusic, { once: true });
+    music.load();
   }
 
   button.addEventListener("click", async () => {
@@ -73,13 +126,15 @@
         await music.play();
         localStorage.setItem(musicPreference, "true");
         setMusicButton(true);
-      } catch {
+      } catch (error) {
         setMusicButton(false);
         button.title = "Tu navegador no pudo reproducir la música.";
+        console.warn("No se pudo iniciar la música de fondo.", error);
       }
     } else {
       music.pause();
       localStorage.setItem(musicPreference, "false");
+      saveMusicPosition(true);
       setMusicButton(false);
     }
   });
