@@ -145,6 +145,18 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertEqual(artwork.mimetype, "image/png")
         artwork.close()
 
+        mobile_welcome_artwork = self.client.head("/static/images/semillitas-bienvenidos-mobile.jpeg")
+        self.assertEqual(mobile_welcome_artwork.status_code, 200)
+        self.assertEqual(mobile_welcome_artwork.mimetype, "image/jpeg")
+        mobile_welcome_artwork.close()
+
+        stylesheet = self.client.get("/static/css/app.css")
+        self.assertIn(
+            b'url("/static/images/semillitas-bienvenidos-mobile.jpeg")',
+            stylesheet.data,
+        )
+        stylesheet.close()
+
         mobile_artwork = self.client.head("/media/SelvaCelular.png")
         self.assertEqual(mobile_artwork.status_code, 200)
         self.assertEqual(mobile_artwork.mimetype, "image/png")

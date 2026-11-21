@@ -720,16 +720,8 @@ body.landing-exit .landing-screen { opacity: 0; transform: scale(1.035); filter:
   to { opacity: 1; transform: translateY(0); }
 }
 @media (max-width: 600px) {
-  .landing-art {
-    inset: auto;
-    top: 43%;
-    left: 50%;
-    width: 100%;
-    height: auto;
-    max-height: 72svh;
-    object-fit: contain;
-    transform: translate(-50%, -65%);
-  }
+  .landing-screen { background: #174b37 url("/static/images/semillitas-bienvenidos-mobile.jpeg") center / cover no-repeat; }
+  .landing-art { display: none; }
   .landing-content {
     padding-bottom: calc(24svh + env(safe-area-inset-bottom));
   }
