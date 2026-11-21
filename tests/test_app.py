@@ -111,10 +111,16 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertEqual(mobile_artwork.status_code, 200)
         self.assertEqual(mobile_artwork.mimetype, "image/png")
         mobile_artwork.close()
+        auth_artwork = self.client.head("/media/SelvaAuthMobile.png")
+        self.assertEqual(auth_artwork.status_code, 200)
+        self.assertEqual(auth_artwork.mimetype, "image/png")
+        auth_artwork.close()
         stylesheet = self.client.get("/static/css/app.css")
-        self.assertIn(b'body.auth-view::before', stylesheet.data)
+        self.assertIn(b'body:not(.landing-view)::before', stylesheet.data)
         self.assertIn(b'url("/media/SelvaCelular.png")', stylesheet.data)
-        self.assertIn(b'backdrop-filter: blur(20px) saturate(160%)', stylesheet.data)
+        self.assertIn(b'body.auth-view::before', stylesheet.data)
+        self.assertIn(b'url("/media/SelvaAuthMobile.png")', stylesheet.data)
+        self.assertIn(b'body.auth-view .flash', stylesheet.data)
         stylesheet.close()
 
     def test_password_visibility_controls_are_available_on_auth_forms(self):
