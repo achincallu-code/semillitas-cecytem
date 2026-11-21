@@ -1,4 +1,36 @@
 (() => {
+  const themeInputs = document.querySelectorAll('input[name="theme"][data-theme-primary]');
+  const themeProperties = {
+    background: "--page-bg",
+    primary: "--primary",
+    accent: "--accent",
+    bar: "--bar",
+    ink: "--ink",
+    surface: "--surface",
+    surfaceSoft: "--surface-soft",
+    line: "--line",
+    muted: "--muted",
+  };
+
+  function applyTheme(input) {
+    Object.entries(themeProperties).forEach(([dataName, property]) => {
+      const attribute = `theme${dataName[0].toUpperCase()}${dataName.slice(1)}`;
+      document.documentElement.style.setProperty(property, input.dataset[attribute]);
+    });
+    document.documentElement.style.setProperty("--page-text", input.dataset.themeInk);
+  }
+
+  themeInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      applyTheme(input);
+    });
+  });
+
+  const selectedTheme = document.querySelector('input[name="theme"][data-theme-primary]:checked');
+  if (selectedTheme) applyTheme(selectedTheme);
+})();
+
+(() => {
   document.querySelectorAll("[data-password-toggle]").forEach((button) => {
     const field = button.closest(".password-field");
     const input = field?.querySelector("input");

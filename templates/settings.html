@@ -31,7 +31,17 @@
       <div class="theme-options">
         {% for key, option in themes.items() %}
           <label class="theme-choice" style="--theme-primary: {{ option.primary }}; --theme-accent: {{ option.accent }}; --theme-soft: {{ option.surface_soft }}">
-            <input type="radio" name="theme" value="{{ key }}" {% if key == current_user.theme %}checked{% endif %}>
+            <input type="radio" name="theme" value="{{ key }}"
+              data-theme-background="{{ option.background }}"
+              data-theme-primary="{{ option.primary }}"
+              data-theme-accent="{{ option.accent }}"
+              data-theme-bar="{{ option.bar }}"
+              data-theme-ink="{{ option.ink }}"
+              data-theme-surface="{{ option.surface }}"
+              data-theme-surface-soft="{{ option.surface_soft }}"
+              data-theme-line="{{ option.line }}"
+              data-theme-muted="{{ option.muted }}"
+              {% if key == current_user.theme %}checked{% endif %}>
             <span class="theme-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="theme-name">{{ option.name }}</span>
             <span class="theme-check" aria-hidden="true">✓</span>

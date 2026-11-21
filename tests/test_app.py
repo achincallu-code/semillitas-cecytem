@@ -172,8 +172,22 @@ class SemillitasWebTests(unittest.TestCase):
         )
         self.assertIn("Tu perfil se actualizó.".encode(), saved.data)
         self.assertIn('name="avatar" value="🐯" checked'.encode(), saved.data)
-        self.assertIn('name="theme" value="oceano" checked'.encode(), saved.data)
+        self.assertIn('name="theme" value="oceano"'.encode(), saved.data)
+        self.assertIn('data-theme-primary="#0277bd"'.encode(), saved.data)
         self.assertIn("--primary: #0277bd".encode(), saved.data)
+        self.assertIn('data-theme-background="#edf8fc"'.encode(), saved.data)
+        self.assertIn('data-theme-surface-soft="#e9f5f8"'.encode(), saved.data)
+
+        dashboard = self.client.get("/inicio")
+        self.assertIn("--page-bg: #edf8fc".encode(), dashboard.data)
+        self.assertIn("--primary: #0277bd".encode(), dashboard.data)
+        css = self.client.get("/static/css/app.css")
+        self.assertIn(".button.primary, .button.tiny", css.data.decode())
+        self.assertIn("background: var(--primary)", css.data.decode())
+        css.close()
+        script = self.client.get("/static/js/site.js")
+        self.assertIn("input.addEventListener(\"change\"", script.data.decode())
+        script.close()
 
     def test_dashboard_separates_years_into_accessible_tabs_and_loads_background_asset(self):
         self.register()

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block title %}Semillitas CECyTEM{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=22">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=23">
   <style>
     :root {
       --page-bg: {{ theme.background }};
@@ -18,9 +18,9 @@
       --line: {{ theme.line }};
       --muted: {{ theme.muted }};
       --page-text: {{ theme.ink }};
-      --glass: color-mix(in srgb, color-mix(in srgb, {{ theme.surface_soft }} 91%, {{ theme.primary }} 9%), transparent 15%);
-      --glass-strong: color-mix(in srgb, color-mix(in srgb, {{ theme.surface }} 92%, {{ theme.primary }} 8%), transparent 7%);
-      --glass-border: color-mix(in srgb, {{ theme.primary }} 28%, rgba(255, 255, 255, .72));
+      --glass: color-mix(in srgb, color-mix(in srgb, var(--surface-soft) 91%, var(--primary) 9%), transparent 15%);
+      --glass-strong: color-mix(in srgb, color-mix(in srgb, var(--surface) 92%, var(--primary) 8%), transparent 7%);
+      --glass-border: color-mix(in srgb, var(--primary) 28%, rgba(255, 255, 255, .72));
     }
   </style>
   {% block head %}{% endblock %}
@@ -65,7 +65,7 @@
   </main>
   <footer class="site-footer">Una aventura para aprender jugando 🌳</footer>
   {% if current_user %}<audio id="background-music" src="{{ url_for('media', filename='selva.mp3') }}" loop preload="none"></audio>{% endif %}
-  <script src="{{ url_for('static', filename='js/site.js') }}?v=4" defer></script>
+  <script src="{{ url_for('static', filename='js/site.js') }}?v=5" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
