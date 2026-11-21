@@ -31,6 +31,55 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
+class _HybridRow(dict[str, Any]):
+    def __getitem__(self, key: str | int) -> Any:
+        if isinstance(key, int):
+            return tuple(self.values())[key]
+        return super().__getitem__(key)
+
+
+class _PostgresCursor:
+    def __init__(self, cursor: Any):
+        self._cursor = cursor
+
+    def fetchone(self) -> _HybridRow | None:
+        row = self._cursor.fetchone()
+        return _HybridRow(row) if row is not None else None
+
+    def fetchall(self) -> list[_HybridRow]:
+        return [_HybridRow(row) for row in self._cursor.fetchall()]
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+
+class _PostgresConnection:
+    def __init__(self, connection: Any):
+        self._connection = connection
+
+    def execute(self, query: str, params: tuple[Any, ...] = ()) -> _PostgresCursor:
+        ignore_conflicts = "INSERT OR IGNORE INTO" in query
+        query = query.replace("INSERT OR IGNORE INTO", "INSERT INTO")
+        query = query.replace(
+            "SELECT * FROM users WHERE username = ? COLLATE NOCASE",
+            "SELECT * FROM users WHERE LOWER(username) = LOWER(?)",
+        )
+        query = query.replace("MIN(5, 1 + (? / 3))", "LEAST(5, 1 + (? / 3))")
+        query = query.replace("?", "%s")
+        if ignore_conflicts:
+            query = f"{query.rstrip().rstrip(';')} ON CONFLICT DO NOTHING"
+        return _PostgresCursor(self._connection.execute(query, params))
+
+    def commit(self) -> None:
+        self._connection.commit()
+
+    def rollback(self) -> None:
+        self._connection.rollback()
+
+    def close(self) -> None:
+        self._connection.close()
+
+
 ROOT = Path(__file__).resolve().parent
 LEGACY_USERS_FILE = ROOT / "usuarios_kinder.json"
 AVATARS = ["🐾", "🦁", "🐯", "🐵", "🐘", "🦓", "🦒", "🦊", "🦝"]
@@ -198,7 +247,7 @@ def _public_question(question: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in question.items() if key != "answer"}
 
 
-def _record_event(db: sqlite3.Connection, username: str, event: str) -> None:
+def _record_event(db: Any, username: str, event: str) -> None:
     db.execute(
         "INSERT INTO events (username, event, created_at) VALUES (?, ?, ?)",
         (username, event[:200], _utc_now()),
@@ -213,7 +262,7 @@ def _ensure_csrf_token() -> str:
     return token
 
 
-def _user() -> sqlite3.Row | None:
+def _user() -> Any | None:
     user_id = session.get("user_id")
     if user_id is None:
         return None
@@ -221,21 +270,21 @@ def _user() -> sqlite3.Row | None:
     return db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
 
 
-def _require_user() -> sqlite3.Row:
+def _require_user() -> Any:
     user = _user()
     if user is None:
         abort(401)
     return user
 
 
-def _require_teacher() -> sqlite3.Row:
+def _require_teacher() -> Any:
     user = _require_user()
     if user["role"] != "docente":
         abort(403)
     return user
 
 
-def _award_medal(db: sqlite3.Connection, user_id: int, score: int) -> str | None:
+def _award_medal(db: Any, user_id: int, score: int) -> str | None:
     medal = "oro" if score == 5 else "plata" if score == 4 else "bronce" if score == 3 else None
     if medal:
         db.execute(f"UPDATE users SET medal_{medal} = medal_{medal} + 1 WHERE id = ?", (user_id,))
@@ -246,7 +295,7 @@ def _award_medal(db: sqlite3.Connection, user_id: int, score: int) -> str | None
     return medal
 
 
-def _legacy_users(db: sqlite3.Connection, app: Flask) -> None:
+def _legacy_users(db: Any, app: Flask) -> None:
     if not LEGACY_USERS_FILE.is_file():
         return
     try:
@@ -304,13 +353,16 @@ def _legacy_users(db: sqlite3.Connection, app: Flask) -> None:
     db.commit()
 
 
+def _integrity_error_types() -> tuple[type[BaseException], ...]:
+    if current_app.config.get("DATABASE_URL"):
+        import psycopg
+
+        return (psycopg.IntegrityError,)
+    return (sqlite3.IntegrityError,)
+
+
 def _init_database(app: Flask) -> None:
-    path = Path(app.config["DATABASE"])
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with closing(sqlite3.connect(path)) as db:
-        db.row_factory = sqlite3.Row
-        db.executescript(
-            """
+    schema = """
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -357,7 +409,31 @@ def _init_database(app: Flask) -> None:
                 created_at TEXT NOT NULL
             );
             """
-        )
+    database_url = app.config.get("DATABASE_URL")
+    if database_url:
+        import psycopg
+        from psycopg.rows import dict_row
+
+        schema = schema.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+        schema = schema.replace("username TEXT NOT NULL UNIQUE COLLATE NOCASE", "username TEXT NOT NULL UNIQUE")
+        db = _PostgresConnection(psycopg.connect(database_url, row_factory=dict_row))
+        try:
+            for statement in schema.split(";"):
+                if statement.strip():
+                    db.execute(statement)
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_idx ON users (LOWER(username))")
+            if app.config["IMPORT_LEGACY_USERS"]:
+                _legacy_users(db, app)
+            db.commit()
+        finally:
+            db.close()
+        return
+
+    path = Path(app.config["DATABASE"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with closing(sqlite3.connect(path)) as db:
+        db.row_factory = sqlite3.Row
+        db.executescript(schema)
         db.commit()
         if app.config["IMPORT_LEGACY_USERS"]:
             _legacy_users(db, app)
@@ -368,10 +444,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("KINDER_SECRET_KEY") or secrets.token_urlsafe(32),
         DATABASE=os.environ.get("KINDER_DATABASE", str(ROOT / "semillitas_web.sqlite3")),
+        DATABASE_URL=os.environ.get("DATABASE_URL", ""),
         IMPORT_LEGACY_USERS=True,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
-        SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production",
+        SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production" or os.environ.get("RENDER") == "true",
     )
     if test_config:
         app.config.update(test_config)
@@ -442,7 +519,8 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
                         (username, generate_password_hash(password), role, avatar, gender if gender in {"femenino", "masculino", "otro"} else "otro"),
                     )
                     db.commit()
-                except sqlite3.IntegrityError:
+                except _integrity_error_types():
+                    db.rollback()
                     flash("Ese nombre de usuario ya está registrado.", "error")
                 else:
                     _record_event(db, username, "Creó una cuenta")
@@ -877,11 +955,18 @@ def _activity_data(game_id: str, state: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def get_db() -> sqlite3.Connection:
+def get_db() -> Any:
     if "db" not in g:
-        db = sqlite3.connect(current_app.config["DATABASE"])
-        db.row_factory = sqlite3.Row
-        db.execute("PRAGMA foreign_keys = ON")
+        database_url = current_app.config.get("DATABASE_URL")
+        if database_url:
+            import psycopg
+            from psycopg.rows import dict_row
+
+            db = _PostgresConnection(psycopg.connect(database_url, row_factory=dict_row))
+        else:
+            db = sqlite3.connect(current_app.config["DATABASE"])
+            db.row_factory = sqlite3.Row
+            db.execute("PRAGMA foreign_keys = ON")
         g.db = db
     return g.db
 

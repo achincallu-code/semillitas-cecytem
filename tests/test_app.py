@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import app as semillitas_app
-from app import GAME_CATALOG, build_questions, create_app
+from app import GAME_CATALOG, _PostgresConnection, build_questions, create_app
 
 
 class SemillitasWebTests(unittest.TestCase):
@@ -23,6 +23,41 @@ class SemillitasWebTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+
+    def test_postgres_adapter_translates_sql_and_supports_named_and_indexed_rows(self):
+        class FakeCursor:
+            def fetchone(self):
+                return {"username": "Ana", "points": 12}
+
+            def fetchall(self):
+                return [{"username": "Ana", "points": 12}]
+
+        class FakeConnection:
+            def __init__(self):
+                self.query = None
+                self.params = None
+
+            def execute(self, query, params):
+                self.query = query
+                self.params = params
+                return FakeCursor()
+
+        raw_connection = FakeConnection()
+        db = _PostgresConnection(raw_connection)
+
+        row = db.execute(
+            "SELECT * FROM users WHERE username = ? COLLATE NOCASE",
+            ("ana",),
+        ).fetchone()
+        self.assertEqual(raw_connection.query, "SELECT * FROM users WHERE LOWER(username) = LOWER(%s)")
+        self.assertEqual(raw_connection.params, ("ana",))
+        self.assertEqual((row["username"], row[1]), ("Ana", 12))
+
+        db.execute("INSERT OR IGNORE INTO users (username) VALUES (?)", ("Ana",))
+        self.assertEqual(
+            raw_connection.query,
+            "INSERT INTO users (username) VALUES (%s) ON CONFLICT DO NOTHING",
+        )
 
     def csrf_token(self):
         response = self.client.get("/")

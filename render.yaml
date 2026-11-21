@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: semillitas-cecytem
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: KINDER_SECRET_KEY
+        generateValue: true
+      - key: KINDER_TEACHER_CODE
+        sync: false
