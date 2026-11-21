@@ -12,6 +12,7 @@
     </div>
   </div>
   <form class="card auth-card" action="{{ url_for('login') }}" method="post">
+    <a class="back-link auth-back-link" href="{{ url_for('index') }}">← Regresar</a>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <span class="card-icon">🌱</span>
     <h2>¡Qué bueno verte!</h2>

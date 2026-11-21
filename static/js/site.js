@@ -2,6 +2,7 @@
   const themeInputs = document.querySelectorAll('input[name="theme"][data-theme-primary]');
   const themeProperties = {
     background: "--page-bg",
+    backgroundImage: "--page-bg-image",
     primary: "--primary",
     accent: "--accent",
     bar: "--bar",
@@ -28,6 +29,35 @@
 
   const selectedTheme = document.querySelector('input[name="theme"][data-theme-primary]:checked');
   if (selectedTheme) applyTheme(selectedTheme);
+})();
+
+(() => {
+  const scrollKey = "semillitas-post-scroll";
+  const savedPosition = sessionStorage.getItem(scrollKey);
+  if (savedPosition) {
+    sessionStorage.removeItem(scrollKey);
+    try {
+      const position = JSON.parse(savedPosition);
+      if (position.path === window.location.pathname && Number.isFinite(position.y)) {
+        requestAnimationFrame(() => {
+          document.documentElement.style.scrollBehavior = "auto";
+          window.scrollTo(0, position.y);
+          requestAnimationFrame(() => document.documentElement.style.removeProperty("scroll-behavior"));
+        });
+      }
+    } catch (error) {
+      console.error("No se pudo restaurar la posición de desplazamiento.", error);
+    }
+  }
+
+  document.querySelectorAll("form[data-preserve-scroll]").forEach((form) => {
+    form.addEventListener("submit", () => {
+      sessionStorage.setItem(scrollKey, JSON.stringify({
+        path: window.location.pathname,
+        y: window.scrollY,
+      }));
+    });
+  });
 })();
 
 (() => {

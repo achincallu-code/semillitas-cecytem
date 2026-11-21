@@ -11,7 +11,7 @@
       <p>Elige quién te acompaña y los colores de tu mundo.</p>
     </div>
   </header>
-  <form class="settings-form settings-card card" method="post" action="{{ url_for('settings') }}">
+  <form class="settings-form settings-card card" method="post" action="{{ url_for('settings') }}" data-preserve-scroll>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <fieldset class="avatar-picker settings-avatar-picker">
       <legend>Elige tu avatar</legend>
@@ -33,6 +33,7 @@
           <label class="theme-choice" style="--theme-primary: {{ option.primary }}; --theme-accent: {{ option.accent }}; --theme-soft: {{ option.surface_soft }}">
             <input type="radio" name="theme" value="{{ key }}"
               data-theme-background="{{ option.background }}"
+              data-theme-background-image="{{ option.get('background_image', 'none, none') }}"
               data-theme-primary="{{ option.primary }}"
               data-theme-accent="{{ option.accent }}"
               data-theme-bar="{{ option.bar }}"

@@ -98,6 +98,7 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertEqual(login_page.status_code, 200)
         self.assertIn("Nombre de usuario".encode(), login_page.data)
         self.assertIn('action="/iniciar-sesion"'.encode(), login_page.data)
+        self.assertIn('class="back-link auth-back-link" href="/"'.encode(), login_page.data)
 
         artwork = self.client.head("/static/images/semillitas-bienvenidos.png")
         self.assertEqual(artwork.status_code, 200)
@@ -165,6 +166,9 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertEqual(settings.status_code, 200)
         self.assertIn("Ajustes de aventura".encode(), settings.data)
         self.assertIn('name="avatar" value="🦁" checked'.encode(), settings.data)
+        self.assertIn(b'data-preserve-scroll', settings.data)
+        self.assertIn(b'data-theme-background-image="none, none"', settings.data)
+        self.assertIn(b'data-theme-background-image="linear-gradient(130deg,', settings.data)
         saved = self.client.post(
             "/configuracion",
             data={"csrf_token": self.csrf_token(), "avatar": "🐯", "theme": "oceano"},
@@ -187,6 +191,8 @@ class SemillitasWebTests(unittest.TestCase):
         css.close()
         script = self.client.get("/static/js/site.js")
         self.assertIn("input.addEventListener(\"change\"", script.data.decode())
+        self.assertIn('backgroundImage: "--page-bg-image"', script.data.decode())
+        self.assertIn('data-preserve-scroll', script.data.decode())
         script.close()
 
     def test_dashboard_separates_years_into_accessible_tabs_and_loads_background_asset(self):

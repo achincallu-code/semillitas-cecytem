@@ -26,7 +26,7 @@
           <small>¡Ya está en tu álbum!</small>
         {% else %}
           <small>Una nueva amiga para tu colección</small>
-          <form method="post" action="{{ url_for('buy_sticker', sticker_id=sticker.id) }}">
+          <form method="post" action="{{ url_for('buy_sticker', sticker_id=sticker.id) }}" data-preserve-scroll>
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <button class="button tiny" type="submit">Conseguir ⭐ {{ sticker.cost }}</button>
           </form>
