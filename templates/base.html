@@ -66,7 +66,7 @@
   </main>
   <footer class="site-footer">Una aventura para aprender jugando 🌳</footer>
   {% if current_user %}<audio id="background-music" src="{{ url_for('media', filename='selva.mp3') }}" loop preload="none"></audio>{% endif %}
-  <script src="{{ url_for('static', filename='js/site.js') }}?v=8" defer></script>
+  <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

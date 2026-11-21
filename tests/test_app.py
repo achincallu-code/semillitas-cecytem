@@ -87,6 +87,44 @@ class SemillitasWebTests(unittest.TestCase):
             follow_redirects=True,
         )
 
+    def test_logout_redirects_students_and_teachers_to_login(self):
+        self.register()
+        self.login()
+        response = self.client.post(
+            "/cerrar-sesion",
+            data={"csrf_token": self.csrf_token()},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/iniciar-sesion")
+        login_page = self.client.get(response.headers["Location"])
+        self.assertIn(b'id="username"', login_page.data)
+
+        with self.app.app_context():
+            from app import get_db
+
+            get_db().execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                ("docente_salida", semillitas_app.generate_password_hash("docente123"), "docente"),
+            )
+            get_db().commit()
+
+        self.client.post(
+            "/iniciar-sesion",
+            data={
+                "csrf_token": self.csrf_token(),
+                "username": "docente_salida",
+                "password": "docente123",
+            },
+        )
+        response = self.client.post(
+            "/cerrar-sesion",
+            data={"csrf_token": self.csrf_token()},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/iniciar-sesion")
+        login_page = self.client.get(response.headers["Location"])
+        self.assertIn(b'id="username"', login_page.data)
+
     def test_welcome_screen_precedes_login_and_serves_its_artwork(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)

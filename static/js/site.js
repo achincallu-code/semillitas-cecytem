@@ -31,6 +31,7 @@
 
 (() => {
   const scrollKey = "semillitas-post-scroll";
+  const gameReturnScrollKey = "semillitas-game-return-scroll";
   const savedPosition = sessionStorage.getItem(scrollKey);
   if (savedPosition) {
     sessionStorage.removeItem(scrollKey);
@@ -47,6 +48,54 @@
       console.error("No se pudo restaurar la posición de desplazamiento.", error);
     }
   }
+
+  const gameReturnScroll = sessionStorage.getItem(gameReturnScrollKey);
+  if (window.location.pathname === "/inicio" && gameReturnScroll) {
+    sessionStorage.removeItem(gameReturnScrollKey);
+    try {
+      const position = JSON.parse(gameReturnScroll);
+      if (position.path === window.location.pathname && Number.isFinite(position.y)) {
+        requestAnimationFrame(() => {
+          document.documentElement.style.scrollBehavior = "auto";
+          window.scrollTo(0, position.y);
+          requestAnimationFrame(() => document.documentElement.style.removeProperty("scroll-behavior"));
+        });
+      }
+    } catch (error) {
+      console.error("No se pudo restaurar la posición al volver del juego.", error);
+    }
+  } else if (!window.location.pathname.startsWith("/juego/")) {
+    sessionStorage.removeItem(gameReturnScrollKey);
+  }
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const link = target?.closest(".game-card[href]");
+    if (
+      !link
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+      || link.target
+      || link.hasAttribute("download")
+    ) return;
+
+    const destination = new URL(link.href, window.location.href);
+    if (destination.origin === window.location.origin && destination.pathname.startsWith("/juego/")) {
+      sessionStorage.setItem(gameReturnScrollKey, JSON.stringify({
+        path: window.location.pathname,
+        y: window.scrollY,
+      }));
+    }
+  });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && window.location.pathname === "/inicio") {
+      sessionStorage.removeItem(gameReturnScrollKey);
+    }
+  });
 
   document.querySelectorAll("form[data-preserve-scroll]").forEach((form) => {
     form.addEventListener("submit", () => {

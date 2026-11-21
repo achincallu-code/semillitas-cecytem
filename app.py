@@ -546,7 +546,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             get_db().commit()
         session.clear()
         flash("Sesión cerrada.", "success")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_page"))
 
     @app.get("/juego/<game_id>")
     def game(game_id: str):
