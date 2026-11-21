@@ -104,6 +104,20 @@ class SemillitasWebTests(unittest.TestCase):
         self.assertEqual(artwork.mimetype, "image/png")
         artwork.close()
 
+    def test_password_visibility_controls_are_available_on_auth_forms(self):
+        login_page = self.client.get("/iniciar-sesion")
+        self.assertIn(b'data-password-toggle aria-label="Mostrar contrase\xc3\xb1a"', login_page.data)
+        self.assertIn(b'class="password-field"', login_page.data)
+
+        register_page = self.client.get("/registro")
+        self.assertEqual(register_page.status_code, 200)
+        self.assertEqual(register_page.data.count(b"data-password-toggle"), 2)
+        self.assertIn(b"Mostrar clave de docente", register_page.data)
+
+        script = self.client.get("/static/js/site.js")
+        self.assertIn(b'input.type = visible ? "text" : "password"', script.data)
+        script.close()
+
     def test_register_login_and_dashboard(self):
         response = self.register()
         self.assertIn("Cuenta creada".encode(), response.data)

@@ -1,4 +1,25 @@
 (() => {
+  document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+    const field = button.closest(".password-field");
+    const input = field?.querySelector("input");
+    if (!input) return;
+    const hiddenLabel = button.getAttribute("aria-label") || "Mostrar contraseña";
+
+    button.addEventListener("click", () => {
+      const visible = input.type === "password";
+      input.type = visible ? "text" : "password";
+      button.setAttribute("aria-pressed", String(visible));
+      button.setAttribute(
+        "aria-label",
+        visible ? "Ocultar contraseña" : hiddenLabel,
+      );
+      field.querySelector("[data-eye-open]").hidden = visible;
+      field.querySelector("[data-eye-closed]").hidden = !visible;
+    });
+  });
+})();
+
+(() => {
   const button = document.querySelector("#sound-toggle");
   const music = document.querySelector("#background-music");
   if (!button || !music) return;

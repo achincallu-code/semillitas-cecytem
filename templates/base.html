@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block title %}Semillitas CECyTEM{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=21">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=22">
   <style>
     :root {
       --page-bg: {{ theme.background }};
@@ -65,7 +65,7 @@
   </main>
   <footer class="site-footer">Una aventura para aprender jugando 🌳</footer>
   {% if current_user %}<audio id="background-music" src="{{ url_for('media', filename='selva.mp3') }}" loop preload="none"></audio>{% endif %}
-  <script src="{{ url_for('static', filename='js/site.js') }}?v=3" defer></script>
+  <script src="{{ url_for('static', filename='js/site.js') }}?v=4" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
