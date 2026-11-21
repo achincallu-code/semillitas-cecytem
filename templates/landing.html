@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Bienvenidos a Semillitas CECyTEM{% endblock %}
+{% block body_class %}landing-view{% endblock %}
+{% block content %}
+<section class="landing-screen" aria-label="Bienvenida a Semillitas CECyTEM">
+  <img class="landing-art" src="{{ url_for('static', filename='images/semillitas-bienvenidos.png') }}" alt="Bienvenidos a Semillitas CECyTEM, una aventura educativa en la selva" fetchpriority="high">
+  <div class="landing-content">
+    <a class="landing-start" href="{{ url_for('login_page') }}" data-start-login>
+      <span>Iniciar</span><span class="landing-arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/landing.js') }}?v=1" defer></script>
+{% endblock %}

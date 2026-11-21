@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}Semillitas CECyTEM{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=21">
+  <style>
+    :root {
+      --page-bg: {{ theme.background }};
+      --primary: {{ theme.primary }};
+      --accent: {{ theme.accent }};
+      --bar: {{ theme.bar }};
+      --ink: {{ theme.ink }};
+      --surface: {{ theme.surface }};
+      --surface-soft: {{ theme.surface_soft }};
+      --line: {{ theme.line }};
+      --muted: {{ theme.muted }};
+      --page-text: {{ theme.ink }};
+      --glass: color-mix(in srgb, color-mix(in srgb, {{ theme.surface_soft }} 91%, {{ theme.primary }} 9%), transparent 15%);
+      --glass-strong: color-mix(in srgb, color-mix(in srgb, {{ theme.surface }} 92%, {{ theme.primary }} 8%), transparent 7%);
+      --glass-border: color-mix(in srgb, {{ theme.primary }} 28%, rgba(255, 255, 255, .72));
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="topbar">
+    <a class="brand" href="{% if current_user and current_user.role == 'docente' %}{{ url_for('teacher_panel') }}{% elif current_user %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
+      <span class="brand-mark" aria-hidden="true">🌱</span>
+      <span class="brand-label">SEMILLITAS <small>CECyTEM</small></span>
+      <span class="brand-sparkle" aria-hidden="true">✦</span>
+    </a>
+    {% if current_user %}
+      <nav class="top-actions" aria-label="Navegación">
+        {% if current_user.role == 'docente' %}
+          <a class="nav-link{% if request.endpoint == 'teacher_panel' %} current{% endif %}" href="{{ url_for('teacher_panel') }}"><span aria-hidden="true">👩‍🏫</span> Panel docente</a>
+        {% else %}
+          <span class="score-pill">{{ current_user.avatar }} ⭐ {{ current_user.points }}</span>
+          <a class="nav-link" href="{{ url_for('dashboard') }}"><span aria-hidden="true">🧭</span> Mi aventura</a>
+          <a class="nav-link{% if request.endpoint == 'album_page' %} current{% endif %}" href="{{ url_for('album_page') }}"><span aria-hidden="true">📔</span> Álbum</a>
+          <a class="nav-link{% if request.endpoint == 'settings_page' %} current{% endif %}" href="{{ url_for('settings_page') }}"><span aria-hidden="true">⚙️</span> Ajustes</a>
+          <a class="nav-link" href="{{ url_for('guide') }}"><span aria-hidden="true">📖</span> Guía</a>
+          <button class="nav-link nav-button" id="sound-toggle" type="button" aria-pressed="false">🔈 Música</button>
+        {% endif %}
+        <form action="{{ url_for('logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="nav-link nav-button" type="submit"><span aria-hidden="true">👋</span> Salir</button>
+        </form>
+      </nav>
+    {% endif %}
+  </header>
+  <main class="site-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack" aria-live="polite">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">Una aventura para aprender jugando 🌳</footer>
+  {% if current_user %}<audio id="background-music" src="{{ url_for('media', filename='selva.mp3') }}" loop preload="none"></audio>{% endif %}
+  <script src="{{ url_for('static', filename='js/site.js') }}?v=3" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

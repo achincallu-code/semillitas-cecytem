@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+semillitas_web.sqlite3
+semillitas_web.sqlite3-shm
+semillitas_web.sqlite3-wal
+usuarios_kinder.json
+bitacora.json
+bitacora_sistema.csv
+reporte_kinder.csv

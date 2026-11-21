@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ game.title }} · Semillitas CECyTEM{% endblock %}
+{% block content %}
+<section class="game-shell">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Volver a mi aventura</a>
+  <header class="game-heading">
+    <span class="game-icon large">{{ game.icon }}</span>
+    <div><p class="eyebrow">{% if game.level %}{{ ["","PRIMER AÑO","SEGUNDO AÑO","TERCER AÑO"][game.level] }}{% else %}MINIJUEGO{% endif %}</p><h1>{{ game.title }}</h1><p>{{ game.description }}</p></div>
+  </header>
+  <div class="game-progress-card">
+    <div class="game-progress"><span>AVENTURA EN CURSO</span><strong id="game-status">{% if game.mode == 'quiz' %}Pregunta 1 de 5{% else %}¡A jugar!{% endif %}</strong></div>
+    <div class="progress-track"><span id="progress-bar" style="width: 20%"></span></div>
+  </div>
+  <div class="game-tools"><button id="repeat-instruction" class="button secondary" type="button">👂 Escuchar instrucciones</button></div>
+  <section id="game-stage" class="game-stage">
+    {% if game.mode == 'quiz' %}
+      <div id="question-visual" class="question-visual"></div>
+      <h2 id="question-prompt" class="question-prompt"></h2>
+      <button id="repeat-sound" class="button secondary sound-button" type="button" hidden>🔊 Escuchar otra vez</button>
+      <div id="answer-options" class="answer-options"></div>
+      <p id="answer-feedback" class="answer-feedback" aria-live="polite"></p>
+    {% else %}
+      <div id="activity-root"></div>
+    {% endif %}
+  </section>
+  <div id="game-result" class="game-result" hidden></div>
+  <div class="game-bottom"><a class="button secondary" href="{{ url_for('dashboard') }}">Salir del juego</a></div>
+</section>
+<script id="game-data" type="application/json">{{ {
+  "id": game.id,
+  "title": game.title,
+  "mode": game.mode,
+  "roundId": round_id,
+  "question": question,
+  "activity": activity_data,
+  "csrf": csrf_token,
+  "mediaUrl": "/media/",
+  "dashboardUrl": url_for('dashboard')
+}|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/game.js') }}?v=2" defer></script>
+{% endblock %}

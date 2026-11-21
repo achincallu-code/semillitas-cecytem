@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Panel docente · Semillitas CECyTEM{% endblock %}
+{% block content %}
+<div class="teacher-shell">
+  <header class="teacher-hero">
+    <div class="teacher-hero-copy">
+      <p class="eyebrow">👩‍🏫 ACOMPAÑAMIENTO DEL GRUPO</p>
+      <h1>Panel docente</h1>
+      <p>Consulta el avance, las medallas y las actividades recientes de cada estudiante.</p>
+      <div class="teacher-actions">
+        <a class="button primary" href="{{ url_for('teacher_report') }}">⬇ Descargar avance CSV</a>
+        <a class="button secondary" href="{{ url_for('teacher_event_report') }}">📜 Descargar bitácora</a>
+      </div>
+    </div>
+    <div class="teacher-hero-art" aria-hidden="true">
+      <span>🌿</span><strong>Crecer<br>aprendiendo</strong><span>🌱</span>
+    </div>
+  </header>
+
+  <nav class="teacher-tabs" aria-label="Secciones del panel docente" role="tablist">
+    <button class="teacher-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="teacher-panel-resumen" data-teacher-tab="resumen">📊 Resumen</button>
+    <button class="teacher-tab" type="button" role="tab" aria-selected="false" aria-controls="teacher-panel-estudiantes" data-teacher-tab="estudiantes">🧑‍🎓 Estudiantes</button>
+    <button class="teacher-tab" type="button" role="tab" aria-selected="false" aria-controls="teacher-panel-actividad" data-teacher-tab="actividad">📜 Actividad reciente</button>
+  </nav>
+
+  <div class="teacher-tab-panel" id="teacher-panel-resumen" data-teacher-panel="resumen" role="tabpanel">
+    <section class="teacher-overview" aria-label="Resumen del grupo">
+      <article class="teacher-overview-card">
+        <span class="teacher-overview-icon" aria-hidden="true">🧑‍🎓</span>
+        <div><strong>{{ group_stats.students }}</strong><span>Estudiantes</span></div>
+      </article>
+      <article class="teacher-overview-card">
+        <span class="teacher-overview-icon" aria-hidden="true">📚</span>
+        <div><strong>{{ group_stats.activities }}</strong><span>Actividades completadas</span></div>
+      </article>
+      <article class="teacher-overview-card">
+        <span class="teacher-overview-icon" aria-hidden="true">⭐</span>
+        <div><strong>{{ group_stats.points }}</strong><span>Puntos del grupo</span></div>
+      </article>
+      <article class="teacher-overview-card">
+        <span class="teacher-overview-icon" aria-hidden="true">🏅</span>
+        <div><strong>{{ group_stats.medals }}</strong><span>Medallas obtenidas</span></div>
+      </article>
+    </section>
+  </div>
+
+  <section class="teacher-section teacher-tab-panel" id="teacher-panel-estudiantes" data-teacher-panel="estudiantes" role="tabpanel" aria-labelledby="student-list-title" hidden>
+    <div class="teacher-section-heading">
+      <div>
+        <p class="eyebrow">SEGUIMIENTO INDIVIDUAL</p>
+        <h2 id="student-list-title">Estudiantes</h2>
+        <p>Abre una ficha para revisar sus resultados y sus actividades más recientes.</p>
+      </div>
+      <label class="teacher-search">
+        <span aria-hidden="true">🔎</span>
+        <span class="visually-hidden">Buscar estudiante</span>
+        <input id="teacher-student-search" type="search" placeholder="Buscar estudiante" autocomplete="off">
+      </label>
+    </div>
+
+    <div class="teacher-student-list" id="teacher-student-list">
+      {% for student in students %}
+        <details class="teacher-student" data-student-name="{{ student.username | lower }}">
+          <summary class="teacher-student-summary">
+            <span class="teacher-student-avatar" aria-hidden="true">{{ student.avatar }}</span>
+            <span class="teacher-student-name"><strong>{{ student.username }}</strong><small>Árbol-Dino · Nivel {{ student.tree_level }} de 5</small></span>
+            <span class="teacher-student-badges">
+              <span>⭐ {{ student.points }}</span>
+              <span>📚 {{ student.completed_activities }}</span>
+            </span>
+            <span class="teacher-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="teacher-student-details">
+            <div class="teacher-student-metrics">
+              <article><span>⭐</span><small>Puntos</small><strong>{{ student.points }}</strong></article>
+              <article><span>📚</span><small>Actividades completadas</small><strong>{{ student.completed_activities }}</strong></article>
+              <article><span>✍️</span><small>Respuestas registradas</small><strong>{{ student.attempts }}</strong></article>
+              <article><span>💡</span><small>Errores</small><strong>{{ student.errors }}</strong></article>
+              <article><span>⏱️</span><small>Tiempo total</small><strong>{{ (student.total_time / 60)|round(1) }} min</strong></article>
+              <article><span>🥇</span><small>Medallas</small><strong>{{ student.medal_oro + student.medal_plata + student.medal_bronce }}</strong></article>
+            </div>
+
+            <div class="teacher-student-lower">
+              <section class="teacher-history" aria-label="Actividades recientes de {{ student.username }}">
+                <h3>Actividades recientes <small>Hasta 8 registros</small></h3>
+                {% set activities = recent_activities[student.id] %}
+                {% if activities %}
+                  <ul>
+                    {% for activity in activities %}
+                      <li>
+                        <span class="teacher-history-title"><strong>{{ activity.title }}</strong><small>{{ activity.created_at[:16].replace('T', ' ') }}</small></span>
+                        <span class="teacher-history-score">{{ activity.score }} / {{ activity.total }}</span>
+                        {% if activity.medal == 'oro' %}<span class="teacher-medal gold">🥇 Oro</span>
+                        {% elif activity.medal == 'plata' %}<span class="teacher-medal silver">🥈 Plata</span>
+                        {% elif activity.medal == 'bronce' %}<span class="teacher-medal bronze">🥉 Bronce</span>
+                        {% else %}<span class="teacher-medal none">Sin medalla</span>{% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="teacher-empty-note">Aún no hay actividades completadas.</p>
+                {% endif %}
+              </section>
+
+              <section class="teacher-medal-summary" aria-label="Medallas de {{ student.username }}">
+                <h3>Reconocimientos</h3>
+                <div><span>🥇 Oro</span><strong>{{ student.medal_oro }}</strong></div>
+                <div><span>🥈 Plata</span><strong>{{ student.medal_plata }}</strong></div>
+                <div><span>🥉 Bronce</span><strong>{{ student.medal_bronce }}</strong></div>
+                <p>Promedio de actividad: {{ (student.average_activity_time / 60)|round(1) }} min</p>
+              </section>
+            </div>
+          </div>
+        </details>
+      {% else %}
+        <div class="teacher-empty">
+          <span aria-hidden="true">🌱</span>
+          <h3>Aún no hay estudiantes</h3>
+          <p>Cuando se registren, podrás consultar aquí el avance individual de cada uno.</p>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="teacher-empty-note" id="teacher-search-empty" hidden>No se encontraron estudiantes con ese nombre.</p>
+  </section>
+
+  <section class="teacher-section teacher-tab-panel teacher-activity-section" id="teacher-panel-actividad" data-teacher-panel="actividad" role="tabpanel" aria-labelledby="teacher-events-title" hidden>
+    <div class="teacher-section-heading">
+      <div>
+        <p class="eyebrow">REGISTRO DEL GRUPO</p>
+        <h2 id="teacher-events-title">Actividad reciente</h2>
+        <p>Últimos movimientos registrados para estudiantes del grupo.</p>
+      </div>
+    </div>
+    <div class="teacher-events">
+      {% for event in events %}
+        <article class="teacher-event">
+          <span class="teacher-event-dot" aria-hidden="true"></span>
+          <time>{{ event.created_at[:16].replace('T', ' ') }}</time>
+          <strong>{{ event.username }}</strong>
+          <span>{{ event.event }}</span>
+        </article>
+      {% else %}
+        <p class="teacher-empty-note">Todavía no hay actividad registrada.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}?v=1" defer></script>
+{% endblock %}

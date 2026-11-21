@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Ajustes · Semillitas CECyTEM{% endblock %}
+{% block content %}
+<section class="settings-page section-block">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Volver a mi aventura</a>
+  <header class="settings-intro card">
+    <span class="settings-hero-icon" aria-hidden="true">🎨</span>
+    <div>
+      <p class="eyebrow">⚙️ TU ESPACIO, A TU MANERA</p>
+      <h1>Ajustes de aventura</h1>
+      <p>Elige quién te acompaña y los colores de tu mundo.</p>
+    </div>
+  </header>
+  <form class="settings-form settings-card card" method="post" action="{{ url_for('settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <fieldset class="avatar-picker settings-avatar-picker">
+      <legend>Elige tu avatar</legend>
+      <p class="settings-help">¿Quién será tu compañero de exploración?</p>
+      <div class="settings-avatar-options">
+        {% for avatar in avatars %}
+          <label class="avatar-choice">
+            <input type="radio" name="avatar" value="{{ avatar }}" {% if avatar == current_user.avatar %}checked{% endif %}>
+            <span>{{ avatar }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <fieldset class="theme-picker">
+      <legend>Elige el color de tu mundo</legend>
+      <p class="settings-help">Puedes cambiarlo cuando quieras.</p>
+      <div class="theme-options">
+        {% for key, option in themes.items() %}
+          <label class="theme-choice" style="--theme-primary: {{ option.primary }}; --theme-accent: {{ option.accent }}; --theme-soft: {{ option.surface_soft }}">
+            <input type="radio" name="theme" value="{{ key }}" {% if key == current_user.theme %}checked{% endif %}>
+            <span class="theme-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-name">{{ option.name }}</span>
+            <span class="theme-check" aria-hidden="true">✓</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="settings-actions">
+      <a class="button secondary" href="{{ url_for('dashboard') }}">Cancelar</a>
+      <button class="button primary" type="submit">Guardar mis ajustes ✨</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

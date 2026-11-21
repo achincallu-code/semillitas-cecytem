@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Mi álbum · Semillitas CECyTEM{% endblock %}
+{% block content %}
+<section class="album-page section-block">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Volver a mi aventura</a>
+  <header class="album-heading card">
+    <div>
+      <p class="eyebrow">📖 COLECCIÓN DE EXPLORADOR</p>
+      <h1>Mi álbum de estampas</h1>
+      <p>Consigue recuerdos de tus aventuras con las estrellas que ganas jugando.</p>
+    </div>
+    <span class="album-count-badge" aria-label="{{ album_count }} de {{ total_stickers }} estampas reunidas">🐾 {{ album_count }} / {{ total_stickers }}</span>
+  </header>
+  <div class="album-progress-card">
+    <div><strong>¡Tu colección va creciendo!</strong><span>{{ album_count }} de {{ total_stickers }} estampas reunidas</span></div>
+    <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="{{ total_stickers }}" aria-valuenow="{{ album_count }}" aria-label="Progreso del álbum">
+      <span style="width: {{ ((album_count / total_stickers) * 100)|round|int }}%"></span>
+    </div>
+  </div>
+  <div class="sticker-row album-grid">
+    {% for sticker in stickers %}
+      <article class="sticker {% if sticker.id in owned_ids %}owned{% else %}sticker-available{% endif %}">
+        <span>{{ sticker.emoji }}</span>
+        <strong>{{ sticker.name }}</strong>
+        {% if sticker.id in owned_ids %}
+          <small>¡Ya está en tu álbum!</small>
+        {% else %}
+          <small>Una nueva amiga para tu colección</small>
+          <form method="post" action="{{ url_for('buy_sticker', sticker_id=sticker.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="button tiny" type="submit">Conseguir ⭐ {{ sticker.cost }}</button>
+          </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Mi aventura · Semillitas CECyTEM{% endblock %}
+{% block content %}
+<section class="hero-banner">
+  <div class="hero-copy">
+    <p class="eyebrow">🌿 TU MUNDO MÁGICO</p>
+    <h1>¡Hola, {{ current_user.username }}!</h1>
+    <p>Tu próxima aventura empieza aquí.</p>
+    <a class="button light" href="#niveles">Elegir un juego ↓</a>
+    <a class="hero-guide" href="{{ url_for('guide') }}">📖 Ver guía</a>
+  </div>
+  <img class="hero-art" src="{{ url_for('media', filename='Selva5.png') }}" alt="Jaguar y exploradores en el Mundo Mágico" fetchpriority="high">
+</section>
+
+<section class="stats-grid" aria-label="Tu progreso">
+  <article class="stat-card stat-points"><span class="stat-icon" aria-hidden="true">⭐</span><strong>{{ current_user.points }}</strong><small>puntos</small></article>
+  <article class="stat-card stat-gold"><span class="stat-icon" aria-hidden="true">🥇</span><strong>{{ current_user.medal_oro }}</strong><small>medallas de oro</small></article>
+  <article class="stat-card stat-silver"><span class="stat-icon" aria-hidden="true">🥈</span><strong>{{ current_user.medal_plata }}</strong><small>medallas de plata</small></article>
+  <article class="stat-card stat-bronze"><span class="stat-icon" aria-hidden="true">🥉</span><strong>{{ current_user.medal_bronce }}</strong><small>medallas de bronce</small></article>
+</section>
+
+<section class="tree-card">
+  <img src="{{ url_for('media', filename=tree_image) }}" alt="Tu Árbol-Dino, nivel {{ tree_level }}" loading="lazy">
+  <div class="tree-summary"><p class="eyebrow">TU ÁRBOL-DINO</p><h2>Nivel {{ tree_level }} de 5</h2><p>¡Sigue aprendiendo para verlo crecer!</p><button class="button secondary" id="tree-open" type="button" aria-haspopup="dialog" aria-controls="tree-dialog">🌳 Ver mi Árbol-Dino</button></div>
+</section>
+
+<dialog class="tree-dialog" id="tree-dialog" aria-labelledby="tree-dialog-title" aria-describedby="tree-growth-hint">
+  <div class="tree-dialog-inner">
+    <header class="tree-dialog-header">
+      <div><p class="eyebrow">🌿 TU ÁRBOL-DINO</p><h2 id="tree-dialog-title">Mi Árbol-Dino</h2></div>
+      <button class="tree-close" id="tree-close" type="button" aria-label="Cerrar Árbol-Dino">×</button>
+    </header>
+    <div class="tree-level-meter">
+      <div class="tree-level-meter-label"><strong>Nivel {{ tree_level }} de 5</strong><span>{% if tree_level < 5 %}Cada 3 medallas, tu árbol sube de nivel.{% else %}¡Llegaste al nivel máximo!{% endif %}</span></div>
+      <progress class="tree-level-bar" max="5" value="{{ tree_level }}" aria-label="Nivel {{ tree_level }} de 5">{{ tree_level }} de 5</progress>
+      <p class="tree-growth-hint" id="tree-growth-hint">{% if tree_level < 5 %}Completa juegos y reúne medallas para hacerlo crecer.{% else %}¡Tu Árbol-Dino llegó a su etapa final!{% endif %}</p>
+    </div>
+    <img class="tree-dialog-image" id="tree-current-image" src="{{ url_for('media', filename=tree_image) }}" alt="Árbol-Dino en su nivel {{ tree_level }}" fetchpriority="high">
+  </div>
+</dialog>
+
+<section id="niveles" class="section-block">
+  <div class="section-heading"><div><p class="eyebrow">📚 APRENDE JUGANDO</p><h2>Elige tu aventura</h2><p>Selecciona un año para ver sus juegos.</p></div></div>
+  <div class="year-tabs" role="tablist" aria-label="Juegos por año">
+  {% for level in levels %}
+    {% set tab_id = "year-" ~ level %}
+    <button class="year-tab{% if level == 1 %} active{% endif %}" id="tab-{{ tab_id }}" type="button" role="tab" aria-selected="{{ 'true' if level == 1 else 'false' }}" aria-controls="panel-{{ tab_id }}" tabindex="{{ '0' if level == 1 else '-1' }}" data-year-tab="{{ level }}">
+      <span class="year-tab-icon">{{ ["🌱","🌿","🌳"][level - 1] }}</span><span class="year-tab-copy"><strong>{{ ["Primer","Segundo","Tercer"][level - 1] }} año</strong><small>{{ games|selectattr("level", "equalto", level)|list|length }} juegos</small></span>
+    </button>
+  {% endfor %}
+    <button class="year-tab fun-tab" id="tab-minigames" type="button" role="tab" aria-selected="false" aria-controls="panel-minigames" tabindex="-1" data-year-tab="minigames">
+      <span class="year-tab-icon">🎉</span><span class="year-tab-copy"><strong>Minijuegos</strong><small>Diversión libre</small></span>
+    </button>
+  </div>
+
+  {% for level in levels %}
+    {% set tab_id = "year-" ~ level %}
+    <div class="year-panel{% if level == 1 %} active{% endif %}" id="panel-{{ tab_id }}" role="tabpanel" aria-labelledby="tab-{{ tab_id }}" data-year-panel="{{ level }}" {% if level != 1 %}hidden{% endif %}>
+      <div class="level-heading"><span class="level-seed">{{ ["🌱","🌿","🌳"][level - 1] }}</span><div><h3>{{ ["Primer","Segundo","Tercer"][level - 1] }} año</h3><p>{{ ["Aventuras para descubrir lo básico","Nuevos retos para seguir creciendo","Desafíos para exploradores expertos"][level - 1] }}</p></div></div>
+      <div class="game-grid">
+        {% for game in games if game.level == level %}
+          <a class="game-card" href="{{ url_for('game', game_id=game.id) }}">
+            <span class="game-icon">{{ game.icon }}</span><span class="game-copy"><strong>{{ game.title }}</strong><small>{{ game.description }}</small></span><span class="card-arrow"><span class="card-action-label">¡Jugar!</span><span aria-hidden="true">↗</span></span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <div class="year-panel" id="panel-minigames" role="tabpanel" aria-labelledby="tab-minigames" data-year-panel="minigames" hidden>
+    <div class="level-heading"><span class="level-seed">🎉</span><div><h3>Minijuegos</h3><p>Practica y juega a tu ritmo, sin presión.</p></div></div>
+    <div class="game-grid">
+      {% for game in games if game.level == 0 %}
+        <a class="game-card" href="{{ url_for('game', game_id=game.id) }}">
+          <span class="game-icon">{{ game.icon }}</span><span class="game-copy"><strong>{{ game.title }}</strong><small>{{ game.description }}</small></span><span class="card-arrow"><span class="card-action-label">¡Jugar!</span><span aria-hidden="true">↗</span></span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="two-column section-block">
+  <a class="card album-teaser" href="{{ url_for('album_page') }}">
+    <span class="album-teaser-icon" aria-hidden="true">📔</span>
+    <span class="album-teaser-copy">
+      <span class="eyebrow">📖 COLECCIÓN</span>
+      <strong>Mi álbum de estampas</strong>
+      <span>Ya reuniste {{ album_count }} de {{ total_stickers }} estampas.</span>
+      <span class="album-teaser-progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ total_stickers }}" aria-valuenow="{{ album_count }}" aria-label="Estampas reunidas">
+        <span style="width: {{ ((album_count / total_stickers) * 100)|round|int }}%"></span>
+      </span>
+    </span>
+    <span class="album-teaser-action">Abrir álbum <span aria-hidden="true">→</span></span>
+  </a>
+  <article class="card">
+    <p class="eyebrow">🏆 AMIGOS EXPLORADORES</p><h2>Ranking</h2>
+    <ol class="ranking-list">
+      {% for entry in ranking %}
+        <li><span class="rank-number">{{ loop.index }}</span><span>{{ entry.avatar }} {{ entry.username }}</span><strong>⭐ {{ entry.points }}</strong></li>
+      {% else %}<li>Aún no hay aventureros en el ranking.</li>{% endfor %}
+    </ol>
+  </article>
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=2" defer></script>
+{% endblock %}

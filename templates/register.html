@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta · Semillitas CECyTEM{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <a class="back-link" href="{{ url_for('login_page') }}">← Regresar</a>
+  <p class="eyebrow">📝 Nuevo explorador</p>
+  <h1>Crear una cuenta</h1>
+  <form method="post" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="username">Nombre de usuario</label>
+    <input id="username" name="username" required minlength="3" maxlength="40" autocomplete="username">
+    <label for="password">Contraseña <span class="muted">(mínimo 6 caracteres)</span></label>
+    <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password">
+    <label for="role">Tipo de cuenta</label>
+    <select id="role" name="role">
+      <option value="estudiante">Estudiante</option>
+      <option value="docente">Docente</option>
+    </select>
+    <div id="teacher-code-field" hidden>
+      <label for="teacher_code">Clave de docente</label>
+      <input id="teacher_code" name="teacher_code" type="password" autocomplete="off">
+      <p class="muted">Solicita la clave a la persona que administra el juego.</p>
+    </div>
+    <label for="gender">Saludo</label>
+    <select id="gender" name="gender">
+      <option value="otro">Prefiero un saludo neutral</option>
+      <option value="femenino">Hada valiente</option>
+      <option value="masculino">Guardián del bosque</option>
+    </select>
+    <fieldset class="avatar-picker">
+      <legend>Elige tu avatar</legend>
+      {% for avatar in avatars %}
+        <label class="avatar-choice">
+          <input type="radio" name="avatar" value="{{ avatar }}" {% if loop.first %}checked{% endif %}>
+          <span>{{ avatar }}</span>
+        </label>
+      {% endfor %}
+    </fieldset>
+    <button class="button primary full" type="submit">Crear cuenta 🌟</button>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  const roleField = document.querySelector("#role");
+  const teacherField = document.querySelector("#teacher-code-field");
+  roleField.addEventListener("change", () => { teacherField.hidden = roleField.value !== "docente"; });
+</script>
+{% endblock %}
